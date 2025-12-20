@@ -105,9 +105,7 @@ const AdminDashboard: React.FC = () => {
   const markCharged = async (bookingId: string) => {
     const pwd = sessionStorage.getItem('adminPassword') || '';
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${bookingId}/charge`, { method: 'PATCH', headers: { 'x-admin-password': pwd } });
-      if (!res.ok) throw new Error('Failed to charge');
-      const updated = await res.json();
+      const updated = await apiClient.patch(`/api/bookings/${bookingId}/charge`, {}, { headers: { 'x-admin-password': pwd } });
       setBookings(prev => prev.map(b => b.id === updated.id ? updated : b));
       await fetchData(pwd);
     } catch (err) {
@@ -118,9 +116,7 @@ const AdminDashboard: React.FC = () => {
   const markNotificationRead = async (id: string) => {
     const pwd = sessionStorage.getItem('adminPassword') || '';
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PATCH', headers: { 'x-admin-password': pwd } });
-      if (!res.ok) throw new Error('Failed to mark read');
-      const updated = await res.json();
+      const updated = await apiClient.patch(`/api/notifications/${id}/read`, {}, { headers: { 'x-admin-password': pwd } });
       setNotifications(prev => prev.map(n => n.id === updated.id ? updated : n));
     } catch (err) {
       console.error('markNotificationRead error', err);
@@ -138,11 +134,7 @@ const AdminDashboard: React.FC = () => {
 
     try {
       const payload = { lawyerId: slot.lawyerId, date: slot.date, time: slot.time, clientName, clientEmail, slotId };
-      const res = await fetch('http://localhost:5000/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(pwd ? { 'x-admin-password': pwd } : {}) }, body: JSON.stringify(payload) });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || 'Failed to book');
-      }
+      await apiClient.post('/api/bookings', payload, { headers: { 'x-admin-password': pwd } });
       await fetchData(pwd);
       alert('Slot booked successfully');
     } catch (err: any) {
