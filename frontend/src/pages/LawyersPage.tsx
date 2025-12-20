@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Search } from 'lucide-react';
 import LawyerProfile from '../components/LawyerProfile';
+import { apiClient } from '../utils/apiClient';
 
 interface Lawyer {
   id?: string;
@@ -169,11 +170,9 @@ const LawyersPage: React.FC = () => {
       if (filters.gender && filters.gender !== 'any') params.append('gender', filters.gender);
       if (filters.minExperience !== undefined && filters.minExperience !== '') params.append('minExperience', String(filters.minExperience));
 
-      // Fetch from registered lawyers endpoint (MongoDB)
-      const url = `http://localhost:5000/api/lawyer-auth/all${params.toString() ? `?${params.toString()}` : ''}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Failed to fetch from server');
-      const data = await res.json();
+      // Fetch from registered lawyers endpoint
+      const url = `/api/lawyer-auth/all${params.toString() ? `?${params.toString()}` : ''}`;
+      const data = await apiClient.get(url);
 
       // Map backend data to UI shape
       const lawyersList = data.lawyers || data || [];

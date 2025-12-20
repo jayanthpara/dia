@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "buildCommand": "echo 'Backend only. Deploy frontend separately.'",
+  "builds": [
+    {
+      "src": "backend/server.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/server.js"
+    }
+  ],
+  "env": {
+    "MONGODB_URI": "@MONGODB_URI",
+    "ADMIN_PASSWORD": "@ADMIN_PASSWORD",
+    "FRONTEND_URL": "@FRONTEND_URL",
+    "NODE_ENV": "production"
+  }
+}

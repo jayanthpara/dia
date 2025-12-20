@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Copy, Download, X } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 
 interface Credential {
   id: string;
@@ -34,13 +35,8 @@ const AdminCredentials: React.FC = () => {
   const fetchCredentials = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/admin/credentials');
-      if (response.ok) {
-        const data = await response.json();
-        setCredentials(data.credentials || []);
-      } else {
-        throw new Error('Failed to load credentials');
-      }
+      const data = await apiClient.get('/api/admin/credentials');
+      setCredentials(data.credentials || []);
     } catch (error) {
       console.error('Error fetching credentials:', error);
       alert('Failed to load credentials');

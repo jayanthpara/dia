@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Bell, User, Edit, LogOut, AlertCircle } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 
 interface LawyerInfo {
   id: string;
@@ -76,13 +77,11 @@ const LawyerDashboard: React.FC = () => {
       setError(null);
       
       // Fetch appointments for this lawyer
-      const appointmentsRes = await fetch(`http://localhost:5000/api/appointments?lawyerEmail=${lawyerEmail}`);
-      const appointmentsData = appointmentsRes.ok ? await appointmentsRes.json() : [];
+      const appointmentsData = await apiClient.get(`/api/appointments?lawyerEmail=${lawyerEmail}`);
       setAppointments(appointmentsData.appointments || appointmentsData || []);
       
       // Fetch notifications for this lawyer
-      const notificationsRes = await fetch(`http://localhost:5000/api/notifications?lawyerEmail=${lawyerEmail}`);
-      const notificationsData = notificationsRes.ok ? await notificationsRes.json() : [];
+      const notificationsData = await apiClient.get(`/api/notifications?lawyerEmail=${lawyerEmail}`);
       setNotifications(Array.isArray(notificationsData) ? notificationsData : notificationsData.notifications || []);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -99,15 +98,11 @@ const LawyerDashboard: React.FC = () => {
 
   const markNotificationAsRead = async (notificationId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/notifications/${notificationId}/read`, {
-        method: 'PATCH'
-      });
+      await apiClient.patch(`/api/notifications/${notificationId}/read`, {});
       
-      if (response.ok) {
-        setNotifications(prev => 
-          prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
-        );
-      }
+      setNotifications(prev => 
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
     } catch (err) {
       console.error('Error marking notification as read:', err);
     }
@@ -115,17 +110,11 @@ const LawyerDashboard: React.FC = () => {
 
   const updateAppointmentStatus = async (appointmentId: string, newStatus: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/appointments/${appointmentId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
+      await apiClient.patch(`/api/appointments/${appointmentId}`, { status: newStatus });
       
-      if (response.ok) {
-        setAppointments(prev =>
-          prev.map(a => a.id === appointmentId ? { ...a, status: newStatus } : a)
-        );
-      }
+      setAppointments(prev =>
+        prev.map(a => a.id === appointmentId ? { ...a, status: newStatus } : a)
+      );
     } catch (err) {
       console.error('Error updating appointment:', err);
     }

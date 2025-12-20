@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Key } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 
 interface Booking {
   id: string;
@@ -79,10 +80,10 @@ const AdminDashboard: React.FC = () => {
     try {
       const headers = pwd ? { 'x-admin-password': pwd } : {};
       const [bkRes, noteRes, apptRes, lawyersRes] = await Promise.all([
-        fetch('http://localhost:5000/api/bookings', { headers }),
-        fetch('http://localhost:5000/api/notifications', { headers }),
-        fetch('http://localhost:5000/api/appointments', { headers }),
-        fetch('http://localhost:5000/api/admin/credentials', { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/bookings`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/appointments`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/credentials`, { headers }),
       ]);
       if (!bkRes.ok) throw new Error('Unauthorized or failed to load bookings');
       const bkData = await bkRes.json();

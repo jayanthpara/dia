@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 
 const LawyerLoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -37,20 +38,12 @@ const LawyerLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/lawyer-auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
+      const data = await apiClient.post('/api/lawyer-auth/login', {
+        email: formData.email,
+        password: formData.password
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (data.success) {
         setSuccess(true);
         // Store lawyer info
         sessionStorage.setItem('lawyerInfo', JSON.stringify(data.lawyer));

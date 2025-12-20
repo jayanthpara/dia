@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { apiClient } from '../utils/apiClient';
 
 const LawyerRegisterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -93,29 +94,21 @@ const LawyerRegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/lawyer-auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone,
-          caseTypes: formData.caseTypes,
-          languages: formData.languages,
-          gender: formData.gender,
-          yearsExperience: formData.yearsExperience,
-          location: formData.location,
-          isProBono: formData.isProBono,
-          bio: formData.bio
-        })
+      const data = await apiClient.post('/api/lawyer-auth/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone,
+        caseTypes: formData.caseTypes,
+        languages: formData.languages,
+        gender: formData.gender,
+        yearsExperience: formData.yearsExperience,
+        location: formData.location,
+        isProBono: formData.isProBono,
+        bio: formData.bio
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (data.success) {
         setSuccess(true);
         // Store lawyer info
         sessionStorage.setItem('lawyerInfo', JSON.stringify(data.lawyer));
