@@ -1,21 +1,8 @@
 const Lawyer = require('../models/Lawyer');
-const fs = require('fs');
-const path = require('path');
+// ...existing code...
 const bcrypt = require('bcrypt');
 
-// Helper to use JSON fallback when MongoDB is not available
-let mongoAvailable = true;
-
-const checkMongoDB = async () => {
-  if (!mongoAvailable) return false;
-  try {
-    await Lawyer.collection.stats();
-    return true;
-  } catch (err) {
-    mongoAvailable = false;
-    return false;
-  }
-};
+// ...existing code...
 
 // Register a lawyer
 exports.registerLawyer = async (req, res) => {
@@ -54,93 +41,45 @@ exports.registerLawyer = async (req, res) => {
 
       await lawyer.save();
 
-      // Return lawyer without password
-      const lawyerObj = lawyer.toObject();
-      delete lawyerObj.password;
-
-      res.status(201).json({
-        success: true,
-        message: 'Lawyer registered successfully',
-        lawyer: lawyerObj
-      });
-    } else {
-      // Fallback: Use JSON file storage
-      const lawyersPath = path.join(__dirname, '../data/lawyers.json');
-      const lawyers = JSON.parse(fs.readFileSync(lawyersPath, 'utf-8'));
-      
-      if (lawyers.some(l => l.contact?.email === email.toLowerCase())) {
-        return res.status(400).json({ success: false, message: 'Email already registered' });
+      try {
+        const { name, email, password, phone, caseTypes, languages, gender, yearsExperience, location, isProBono, bio } = req.body;
+        if (!email || !password || !phone) {
+          return res.status(400).json({ success: false, message: 'Email, password, and phone are required' });
+        }
+        // Check if lawyer already exists
+        const existingLawyer = await Lawyer.findOne({ email: email.toLowerCase() });
+        if (existingLawyer) {
+          return res.status(400).json({ success: false, message: 'Email already registered' });
+        }
+        // Create lawyer
+        const lawyer = new Lawyer({
+          name,
+          email: email.toLowerCase(),
+          password,
+          phone,
+          caseTypes: caseTypes || [],
+          languages: languages || [],
+          gender: gender || 'other',
+          yearsExperience: yearsExperience || 0,
+          location: location || '',
+          isProBono: isProBono || false,
+          bio: bio || '',
+          registeredAt: new Date(),
+          isActive: true
+        });
+        await lawyer.save();
+        // Return lawyer without password
+        const lawyerObj = lawyer.toObject();
+        delete lawyerObj.password;
+        res.status(201).json({
+          success: true,
+          message: 'Lawyer registered successfully',
+          lawyer: lawyerObj
+        });
+      } catch (error) {
+        console.error('Register error:', error);
+        res.status(500).json({ success: false, message: error.message || 'Registration failed' });
       }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-      
-      const newLawyer = {
-        id: String(Math.max(...lawyers.map(l => parseInt(l.id) || 0)) + 1),
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        phone,
-        caseTypes: caseTypes || [],
-        languages: languages || [],
-        gender: gender || 'other',
-        yearsExperience: yearsExperience || 0,
-        location: location || '',
-        isProBono: isProBono || false,
-        bio: bio || '',
-        registeredAt: new Date().toISOString(),
-        contact: { email: email.toLowerCase(), phone }
-      };
-
-      lawyers.push(newLawyer);
-      fs.writeFileSync(lawyersPath, JSON.stringify(lawyers, null, 2));
-
-      const lawyerCopy = { ...newLawyer };
-      delete lawyerCopy.password;
-
-      res.status(201).json({
-        success: true,
-        message: 'Lawyer registered successfully (JSON fallback)',
-        lawyer: lawyerCopy
-      });
-    }
-  } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ success: false, message: error.message || 'Registration failed' });
-  }
-};
-
-// Login a lawyer
-exports.loginLawyer = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-      return res.status(400).json({ success: false, message: 'Email and password are required' });
-    }
-
-    const useMongoDB = await checkMongoDB();
-
-    if (useMongoDB) {
-      const lawyer = await Lawyer.findOne({ email: email.toLowerCase() }).select('+password');
-      if (!lawyer) {
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
-      }
-
-      const isPasswordCorrect = await lawyer.matchPassword(password);
-      if (!isPasswordCorrect) {
-        return res.status(401).json({ success: false, message: 'Invalid email or password' });
-      }
-
-      // Return lawyer without password
-      const lawyerObj = lawyer.toObject();
-      delete lawyerObj.password;
-
-      res.status(200).json({
-        success: true,
-        message: 'Login successful',
-        lawyer: lawyerObj
-      });
-    } else {
       // Fallback: Use JSON file
       const lawyersPath = path.join(__dirname, '../data/lawyers.json');
       const lawyers = JSON.parse(fs.readFileSync(lawyersPath, 'utf-8'));
