@@ -1,5 +1,6 @@
 // backend/controllers/lawyerController.js
-const Lawyer = require('../models/Lawyer');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Utility: case-insensitive includes for arrays
 function arrayIncludesCI(arr = [], value = '') {
@@ -17,35 +18,47 @@ function anyMatchCI(arr = [], filterValues = []) {
 
 async function getLawyers(req, res) {
   try {
+    const dataPath = path.join(__dirname, '../data/lawyers.json');
+    const raw = await fs.readFile(dataPath, 'utf-8');
+    const lawyers = JSON.parse(raw || '[]');
+
+    // Query params
     const { type, language, gender, minExperience } = req.query;
-    let query = { isActive: true };
-    // Filter by case types
-    if (type) {
-      const types = type.split(',').map(t => t.trim().toLowerCase()).filter(Boolean);
-      if (types.length > 0) {
-        query.caseTypes = { $in: types };
+
+    // Normalize multi-valued params (comma-separated)
+    const types = type ? type.split(',').map(s => s.trim()).filter(Boolean) : null;
+    const languages = language ? language.split(',').map(s => s.trim()).filter(Boolean) : null;
+
+    const filtered = lawyers.filter(lawyer => {
+      // Filter by type (case-insensitive, supports multiple)
+      if (types && types.length > 0) {
+        if (!anyMatchCI(lawyer.caseTypes || [], types)) return false;
       }
-    }
-    // Filter by languages
-    if (language) {
-      const languages = language.split(',').map(l => l.trim()).filter(Boolean);
-      if (languages.length > 0) {
-        query.languages = { $in: languages };
+
+      // Filter by language
+      if (languages && languages.length > 0) {
+        if (!anyMatchCI(lawyer.languages || [], languages)) return false;
       }
-    }
-    // Filter by gender
-    if (gender) {
-      query.gender = gender.toLowerCase();
-    }
-    // Filter by minimum experience
-    if (minExperience) {
-      query.yearsExperience = { $gte: parseInt(minExperience) };
-    }
-    const lawyers = await Lawyer.find(query).select('-password');
-    res.json(lawyers);
+
+      // Filter by gender (single value)
+      if (gender) {
+        if (!lawyer.gender || lawyer.gender.toLowerCase() !== String(gender).toLowerCase()) return false;
+      }
+
+      // Filter by minExperience (number)
+      if (minExperience) {
+        const min = parseInt(minExperience, 10);
+        if (Number.isNaN(min)) return false; // invalid number, exclude
+        if (!lawyer.yearsExperience || lawyer.yearsExperience < min) return false;
+      }
+
+      return true;
+    });
+
+    res.json(filtered);
   } catch (err) {
-    console.error('Error reading lawyers from MongoDB', err);
-    res.status(500).json({ error: 'Failed to read lawyers' });
+    console.error('Error reading lawyers.json', err);
+    res.status(500).json({ error: 'Failed to read lawyers data' });
   }
 }
 

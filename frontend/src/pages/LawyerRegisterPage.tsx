@@ -94,8 +94,7 @@ const LawyerRegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      type RegisterResponse = { success: boolean; message?: string; lawyer?: any };
-      const data: RegisterResponse = await apiClient.post('/api/lawyer-auth/register', {
+      const data = await apiClient.post('/api/lawyer-auth/register', {
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -109,7 +108,7 @@ const LawyerRegisterPage: React.FC = () => {
         bio: formData.bio
       });
 
-      if (data && data.success && data.lawyer) {
+      if (data) {
         setSuccess(true);
         // Store lawyer info
         sessionStorage.setItem('lawyerInfo', JSON.stringify(data.lawyer));
