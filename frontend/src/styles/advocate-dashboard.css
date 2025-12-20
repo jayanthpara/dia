@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+
+.font-cursive {
+  font-family: 'Dancing Script', cursive;
+}
+
+.hover-gradient {
+  background-image: linear-gradient(to bottom right, transparent, transparent);
+  transition: background-image 0.3s ease;
+}
+
+.hover-gradient:hover {
+  background-image: linear-gradient(to bottom right, #fdf2f8, #fff1f2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}

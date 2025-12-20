@@ -1,0 +1,293 @@
+[
+  {
+    "id": "1",
+    "name": "Aisha Khan",
+    "caseTypes": [
+      "criminal",
+      "family"
+    ],
+    "languages": [
+      "English",
+      "Urdu"
+    ],
+    "gender": "female",
+    "yearsExperience": 8,
+    "location": "Lahore, Pakistan",
+    "isProBono": true,
+    "previousCases": [
+      {
+        "title": "State vs. Ali - Criminal Defense",
+        "year": 2022,
+        "outcome": "Acquittal",
+        "description": "Successfully defended client in a high-profile assault case."
+      },
+      {
+        "title": "Family Custody - Sara K.",
+        "year": 2020,
+        "outcome": "Favorable Settlement",
+        "description": "Negotiated custody agreement in parallel mediation."
+      }
+    ],
+    "contact": {
+      "email": "aisha.k@example.com",
+      "phone": "+92-300-1234567"
+    },
+    "appointments": [
+      {
+        "id": "a1-1",
+        "date": "2026-01-10",
+        "time": "09:00",
+        "status": "booked",
+        "bookedAt": "2025-12-20T18:02:33.379Z",
+        "bookedBy": {
+          "clientName": "jaya@mail.com",
+          "clientEmail": "jayanth@mil.com"
+        }
+      },
+      {
+        "id": "a1-2",
+        "date": "2026-01-10",
+        "time": "10:00",
+        "status": "available"
+      },
+      {
+        "id": "a1-3",
+        "date": "2026-01-11",
+        "time": "14:00",
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "Bilal Ahmed",
+    "caseTypes": [
+      "civil",
+      "corporate"
+    ],
+    "languages": [
+      "English"
+    ],
+    "gender": "male",
+    "yearsExperience": 12,
+    "location": "Karachi, Pakistan",
+    "isProBono": false,
+    "previousCases": [
+      {
+        "title": "Acme Corp. vs. Beta Ltd.",
+        "year": 2021,
+        "outcome": "Settlement",
+        "description": "Led corporate negotiations to settlement."
+      }
+    ],
+    "contact": {
+      "email": "bilal.a@example.com",
+      "phone": "+92-21-33334444"
+    },
+    "appointments": [
+      {
+        "id": "a2-1",
+        "date": "2026-01-12",
+        "time": "11:00",
+        "status": "available"
+      },
+      {
+        "id": "a2-2",
+        "date": "2026-01-12",
+        "time": "15:00",
+        "status": "available"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "Chen Li",
+    "caseTypes": [
+      "cyber",
+      "criminal"
+    ],
+    "languages": [
+      "English",
+      "Chinese"
+    ],
+    "gender": "male",
+    "yearsExperience": 5,
+    "location": "Beijing, China",
+    "isProBono": false,
+    "previousCases": [
+      {
+        "title": "Data Breach - XYZ Co.",
+        "year": 2023,
+        "outcome": "Judgment for Client",
+        "description": "Represented client in a successful data breach litigation."
+      }
+    ],
+    "contact": {
+      "email": "chen.li@example.com",
+      "phone": "+86-10-88889999"
+    }
+  },
+  {
+    "id": "4",
+    "name": "Dina Rodriguez",
+    "caseTypes": [
+      "family",
+      "civil"
+    ],
+    "languages": [
+      "Spanish",
+      "English"
+    ],
+    "gender": "female",
+    "yearsExperience": 15,
+    "location": "Madrid, Spain",
+    "isProBono": true,
+    "previousCases": [
+      {
+        "title": "Divorce - Mendez",
+        "year": 2018,
+        "outcome": "Favorable Settlement",
+        "description": "Handled complex asset division and custody matters."
+      }
+    ],
+    "contact": {
+      "email": "dina.r@example.com",
+      "phone": "+34-91-555666"
+    }
+  },
+  {
+    "id": "5",
+    "name": "Ethan Smith",
+    "caseTypes": [
+      "cyber",
+      "corporate"
+    ],
+    "languages": [
+      "English"
+    ],
+    "gender": "male",
+    "yearsExperience": 3,
+    "location": "London, UK",
+    "isProBono": false,
+    "previousCases": [
+      {
+        "title": "SMB Data Privacy Compliance",
+        "year": 2022,
+        "outcome": "Compliance Achieved",
+        "description": "Advised small businesses on GDPR compliance."
+      }
+    ],
+    "contact": {
+      "email": "ethan.s@example.com",
+      "phone": "+44-20-77778888"
+    }
+  },
+  {
+    "id": "6",
+    "name": "Fatima Noor",
+    "caseTypes": [
+      "family",
+      "civil"
+    ],
+    "languages": [
+      "English",
+      "Urdu"
+    ],
+    "gender": "female",
+    "yearsExperience": 10,
+    "location": "Islamabad, Pakistan",
+    "isProBono": true,
+    "previousCases": [
+      {
+        "title": "Child Welfare - Khan",
+        "year": 2019,
+        "outcome": "Case Resolved",
+        "description": "Advocated for child custody and welfare."
+      }
+    ],
+    "contact": {
+      "email": "fatima.n@example.com",
+      "phone": "+92-51-4445556"
+    }
+  },
+  {
+    "id": "7",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "$2b$10$ckcv5BPrmrNE49xl6yJ17.fp6E8Ib8n22J15gvX0Sz8CE6Wej//ri",
+    "phone": "+1-234-567-8900",
+    "caseTypes": [
+      "criminal"
+    ],
+    "languages": [],
+    "gender": "other",
+    "yearsExperience": 5,
+    "location": "New York",
+    "isProBono": false,
+    "bio": "",
+    "registeredAt": "2025-12-20T17:15:21.111Z",
+    "contact": {
+      "email": "john@example.com",
+      "phone": "+1-234-567-8900"
+    }
+  },
+  {
+    "id": "8",
+    "name": "soha",
+    "email": "soha@mail.com",
+    "password": "$2b$10$cbcnkK.x4YMU6WHQsERaOO4plUeEzirdako11jxirTNzTf1yxGjPC",
+    "phone": "4204204201",
+    "caseTypes": [
+      "criminal",
+      "corporate",
+      "cyber",
+      "civil",
+      "family"
+    ],
+    "languages": [
+      "French",
+      "Hindi",
+      "Urdu",
+      "Spanish",
+      "Chinese",
+      "English"
+    ],
+    "gender": "female",
+    "yearsExperience": 100,
+    "location": "HYD",
+    "isProBono": true,
+    "bio": "everything everywhere all at once :)",
+    "registeredAt": "2025-12-20T17:45:40.054Z",
+    "contact": {
+      "email": "soha@mail.com",
+      "phone": "4204204201"
+    }
+  },
+  {
+    "id": "9",
+    "name": "jayanth",
+    "email": "jayanth@mail.com",
+    "password": "$2b$10$00LAyO12SDPEKZqdONJCb.PL9i8kl2bY/GtkMtyBkIskjkfXaPnkC",
+    "phone": "9346011959",
+    "caseTypes": [
+      "cyber",
+      "corporate",
+      "family"
+    ],
+    "languages": [
+      "Hindi",
+      "English",
+      "French"
+    ],
+    "gender": "male",
+    "yearsExperience": 2,
+    "location": "Khammam",
+    "isProBono": false,
+    "bio": "",
+    "registeredAt": "2025-12-20T18:03:45.209Z",
+    "contact": {
+      "email": "jayanth@mail.com",
+      "phone": "9346011959"
+    }
+  }
+]
