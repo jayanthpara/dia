@@ -108,7 +108,7 @@ const LawyerRegisterPage: React.FC = () => {
         bio: formData.bio
       });
 
-      if (data.success) {
+      if (data) {
         setSuccess(true);
         // Store lawyer info
         sessionStorage.setItem('lawyerInfo', JSON.stringify(data.lawyer));

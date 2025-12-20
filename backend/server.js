@@ -9,20 +9,17 @@ const connectDB = require('./config/db');
 
 const app = express();
 
-// CORS configuration for production
+// CORS Configuration for Vercel
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.FRONTEND_URL,
-  /\.vercel\.app$/
-];
+  /\.vercel\.app$/,
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.some(allowed => {
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.some(allowed => {
       if (allowed instanceof RegExp) {
         return allowed.test(origin);
       }
@@ -35,7 +32,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-password']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());

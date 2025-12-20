@@ -170,7 +170,7 @@ const LawyersPage: React.FC = () => {
       if (filters.gender && filters.gender !== 'any') params.append('gender', filters.gender);
       if (filters.minExperience !== undefined && filters.minExperience !== '') params.append('minExperience', String(filters.minExperience));
 
-      // Fetch from registered lawyers endpoint
+      // Fetch from registered lawyers endpoint (MongoDB)
       const url = `/api/lawyer-auth/all${params.toString() ? `?${params.toString()}` : ''}`;
       const data = await apiClient.get(url);
 

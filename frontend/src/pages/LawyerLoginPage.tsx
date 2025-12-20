@@ -43,7 +43,7 @@ const LawyerLoginPage: React.FC = () => {
         password: formData.password
       });
 
-      if (data.success) {
+      if (data && data.lawyer) {
         setSuccess(true);
         // Store lawyer info
         sessionStorage.setItem('lawyerInfo', JSON.stringify(data.lawyer));
@@ -52,10 +52,10 @@ const LawyerLoginPage: React.FC = () => {
           navigate('/lawyers');
         }, 2000);
       } else {
-        setError(data.message || 'Login failed. Please check your credentials.');
+        setError(data?.message || 'Login failed. Please check your credentials.');
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Network error. Please try again.');
       console.error('Login error:', err);
     } finally {
       setLoading(false);

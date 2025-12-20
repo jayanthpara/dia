@@ -79,27 +79,17 @@ const AdminDashboard: React.FC = () => {
     setLoading(true);
     try {
       const headers = pwd ? { 'x-admin-password': pwd } : {};
-      const [bkRes, noteRes, apptRes, lawyersRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/bookings`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/notifications`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/appointments`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/credentials`, { headers }),
+      const [bkData, noteData, apptData, lawyersData] = await Promise.all([
+        apiClient.get('/api/bookings').catch(() => []),
+        apiClient.get('/api/notifications').catch(() => []),
+        apiClient.get('/api/appointments').catch(() => []),
+        apiClient.get('/api/admin/credentials').catch(() => ({})),
       ]);
-      if (!bkRes.ok) throw new Error('Unauthorized or failed to load bookings');
-      const bkData = await bkRes.json();
-      setBookings(bkData);
-
-      const noteData = noteRes.ok ? await noteRes.json() : [];
-      setNotifications(noteData);
-
-      const apptData = apptRes.ok ? await apptRes.json() : [];
-      setAppointments(apptData);
-
-      // Fetch registered lawyers
-      if (lawyersRes.ok) {
-        const lawyersData = await lawyersRes.json();
-        setRegisteredLawyers(lawyersData.credentials || []);
-      }
+      
+      setBookings(Array.isArray(bkData) ? bkData : []);
+      setNotifications(Array.isArray(noteData) ? noteData : []);
+      setAppointments(Array.isArray(apptData) ? apptData : []);
+      setRegisteredLawyers(lawyersData.credentials || []);
     } catch (err) {
       console.error('fetchData error', err);
     } finally {
