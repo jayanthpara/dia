@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Star, Briefcase, Award, Mail, Phone } from 'lucide-react';
 import BookingModal from './BookingModal';
+import { apiClient } from '../utils/apiClient';
 
 interface Lawyer {
   id?: string;
@@ -40,18 +41,7 @@ const LawyerProfile: React.FC<LawyerProfileProps> = ({ lawyer }) => {
 
       // Create booking on backend
       const payload = { lawyerId: (lawyer as any).id, clientName, clientEmail, date, time };
-      const res = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Server error: ${text}`);
-      }
-
-      const booking = await res.json();
+      const booking = await apiClient.post('/api/bookings', payload);
 
       // After successful booking creation, open Google Calendar event for the user to add meeting
       const meetingTitle = `Legal Consultation with ${lawyer.name}`;
@@ -89,18 +79,8 @@ const LawyerProfile: React.FC<LawyerProfileProps> = ({ lawyer }) => {
       const clientEmail = currentUser?.email || 'guest@unknown';
       const payload: any = { lawyerId: (lawyer as any).id, clientName, clientEmail, date, time };
 
-      const res = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const data = await apiClient.post('/api/bookings', payload);
 
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || 'Failed to create booking');
-      }
-
-      const data = await res.json();
       setBookingStatus('success');
       alert(`Booking created (ID: ${data.id}) for ${date} ${time}`);
     } catch (err: any) {
@@ -310,20 +290,11 @@ const LawyerProfile: React.FC<LawyerProfileProps> = ({ lawyer }) => {
         availableSlots={availableSlots}
         initialSlotId={initialSlotId}
         onBookSlot={async (date, time, clientName, clientEmail, slotId) => {
-          // include slotId to backend to mark as booked
           try {
             setBookingStatus('loading');
             const payload: any = { lawyerId: (lawyer as any).id, clientName, clientEmail, date, time };
             if (slotId) payload.slotId = slotId;
-            const res = await fetch('http://localhost:5000/api/bookings', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            });
-            if (!res.ok) {
-              const t = await res.text();
-              throw new Error(t || 'Booking failed');
-            }
+            await apiClient.post('/api/bookings', payload);
             setBookingStatus('success');
           } catch (err) {
             console.error('Booking error:', err);
