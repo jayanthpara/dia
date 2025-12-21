@@ -32,9 +32,6 @@ const Navbar = () => {
       subItems: [
         { name: 'Legal Services', path: '/legal-services', icon: <FileText className="w-4 h-4 mr-2" /> },
         { name: 'Legal Support', path: '/legal-support', icon: <Shield className="w-4 h-4 mr-2" /> },
-        { name: 'Affordable Assistance', path: '/affordable-assistance', icon: <FileText className="w-4 h-4 mr-2" /> },
-        { name: 'Expert Matching', path: '/expert-matching', icon: <FileText className="w-4 h-4 mr-2" /> },
-        { name: 'Secure Assistance', path: '/secure-assistance', icon: <FileText className="w-4 h-4 mr-2" /> },
         { name: 'Lawyers', path: '/lawyers', icon: <Users className="w-4 h-4 mr-2" /> },
         { name: 'Forms', path: '/forms', icon: <FileText className="w-4 h-4 mr-2" /> },
       ]

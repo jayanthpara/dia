@@ -57,11 +57,7 @@ function App() {
               } />
               <Route path="/sos" element={<SOSPage />} />
               <Route path="/safe-zones" element={<SafeZones />} />
-              <Route path="/community" element={
-                <ProtectedRoute>
-                  <Community />
-                </ProtectedRoute>
-              } />
+              <Route path="/community" element={<Community />} />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/lawyers" element={<LawyersPage />} />
               <Route path="/lawyer-register" element={<LawyerRegisterPage />} />
@@ -77,11 +73,7 @@ function App() {
                   <FormsPage />
                 </ProtectedRoute>
               } />
-              <Route path="/mental-health" element={
-                <ProtectedRoute>
-                  <MentalHealthPage />
-                </ProtectedRoute>
-              } />
+              <Route path="/mental-health" element={<MentalHealthPage />} />
               <Route path="/advocate-dashboard" element={
                 <ProtectedRoute requiredRole="advocate">
                   <AdvocateDashboard />
