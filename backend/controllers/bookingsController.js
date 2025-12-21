@@ -53,6 +53,12 @@ async function createBooking(req, res) {
       return res.status(400).json({ error: 'Missing required booking fields' });
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(clientEmail)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
     const lawyers = await readJson(lawyersPath);
     const lawyer = lawyers.find(l => String(l.id) === String(lawyerId));
     if (!lawyer) return res.status(404).json({ error: 'Lawyer not found' });
@@ -106,6 +112,7 @@ async function createBooking(req, res) {
 
     bookings.push(booking);
     await writeJson(bookingsPath, bookings);
+    console.log('Booking saved to file:', booking.id);
 
     // Append to CSV transactions sheet
     await appendTransactionCsv({ id: uuidv4(), bookingId: id, lawyerId: lawyer.id, lawyerName: lawyer.name, clientName, clientEmail, date, time, amount, charged: false, createdAt, chargedAt: '' });
@@ -121,8 +128,9 @@ async function createBooking(req, res) {
     };
     notifications.unshift(note);
     await writeJson(notificationsPath, notifications);
+    console.log('Booking notification created');
 
-    console.log('Booking created', booking.id);
+    console.log('Booking created successfully', booking.id);
     // Return booking created
     res.status(201).json(booking);
   } catch (err) {

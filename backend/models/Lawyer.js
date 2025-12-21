@@ -11,6 +11,7 @@ const lawyerSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please provide an email'],
     unique: true,
+    sparse: true,
     lowercase: true,
     match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
   },
@@ -61,7 +62,7 @@ const lawyerSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   }
-});
+}, { timestamps: true });
 
 // Hash password before saving
 lawyerSchema.pre('save', async function(next) {

@@ -59,7 +59,11 @@ app.use('/api/appointments', appointmentsRouter);
 app.use('/api/lawyer-auth', lawyerAuthRouter);
 
 app.get('/', (req, res) => {
-  res.send({ message: 'Lawyer recommendation API - GET /api/lawyer-auth/all for registered lawyers' });
+  res.json({ 
+    message: 'Lawyer recommendation API - GET /api/lawyer-auth/all for registered lawyers',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 const PORT = process.env.PORT || 5000;
