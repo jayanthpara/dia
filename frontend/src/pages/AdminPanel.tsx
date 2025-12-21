@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../utils/apiClient';
 
 const AdminPanel: React.FC = () => {
   const [password, setPassword] = useState('');
@@ -19,11 +20,7 @@ const AdminPanel: React.FC = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }) });
-      if (!res.ok) {
-        setAuthError('Invalid admin password');
-        return;
-      }
+      await apiClient.post('/api/admin/login', { password });
       sessionStorage.setItem('adminPassword', password);
       navigate('/admin/dashboard');
     } catch (err) {

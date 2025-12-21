@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { MapPin, Star, Briefcase, Award, Mail, Phone } from 'lucide-react';
 import BookingModal from './BookingModal';
+import { apiClient } from '../utils/apiClient';
 
 interface Lawyer {
   id?: string;
@@ -34,50 +35,6 @@ const LawyerProfile: React.FC<LawyerProfileProps> = ({ lawyer }) => {
   const [initialSlotId, setInitialSlotId] = useState<string | null>(null);
   const availableSlots = (lawyer as any).appointments || [];
 
-  const handleBookSlot = async (date: string, time: string, clientName: string, clientEmail: string) => {
-    try {
-      setBookingStatus('loading');
-
-      // Create booking on backend
-      const payload = { lawyerId: (lawyer as any).id, clientName, clientEmail, date, time };
-      const res = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Server error: ${text}`);
-      }
-
-      const booking = await res.json();
-
-      // After successful booking creation, open Google Calendar event for the user to add meeting
-      const meetingTitle = `Legal Consultation with ${lawyer.name}`;
-      const meetingDate = new Date(`${date}T${time}`);
-      const endDate = new Date(meetingDate.getTime() + 60 * 60 * 1000);
-      const startDateTime = meetingDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-      const endDateTime = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-      const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE`
-        + `&text=${encodeURIComponent(meetingTitle)}`
-        + `&dates=${startDateTime}/${endDateTime}`
-        + `&details=${encodeURIComponent('Legal consultation session via Google Meet. The meeting link will be provided in the calendar event.')}`
-        + `&add=${encodeURIComponent(clientEmail || '')}`
-        + `&conferencedata=1`  // Enable Google Meet
-        + `&crm=AVAILABLE`
-        + `&add=meet.google.com`;
-
-      window.open(googleCalendarUrl, '_blank');
-
-      setBookingStatus('success');
-    } catch (error) {
-      console.error('Booking error:', error);
-      setBookingStatus('error');
-    }
-  };
-
   // Quick booking triggered on button click (uses current time and current user if available)
   const createQuickBooking = async () => {
     setBookingStatus('loading');
@@ -85,24 +42,30 @@ const LawyerProfile: React.FC<LawyerProfileProps> = ({ lawyer }) => {
       const now = new Date();
       const date = now.toISOString().split('T')[0];
       const time = now.toTimeString().slice(0,5); // HH:MM
-      const clientName = currentUser?.name || 'Guest';
-      const clientEmail = currentUser?.email || 'guest@unknown';
+      
+      // Allow guest bookings or logged-in users
+      let clientName = 'Guest';
+      let clientEmail = 'guest@consultation.local';
+      
+      if (currentUser?.email && currentUser.email.includes('@')) {
+        clientName = currentUser.name || 'User';
+        clientEmail = currentUser.email;
+      } else {
+        // For guest, prompt for email
+        const guestEmail = window.prompt('Enter your email for the booking:');
+        if (!guestEmail || !guestEmail.includes('@')) {
+          throw new Error('Valid email is required for booking');
+        }
+        clientEmail = guestEmail;
+        const guestName = window.prompt('Enter your name (optional):');
+        if (guestName) clientName = guestName;
+      }
+      
       const payload: any = { lawyerId: (lawyer as any).id, clientName, clientEmail, date, time };
 
-      const res = await fetch('http://localhost:5000/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || 'Failed to create booking');
-      }
-
-      const data = await res.json();
+      const data = await apiClient.post<any>('/api/bookings', payload);
       setBookingStatus('success');
-      alert(`Booking created (ID: ${data.id}) for ${date} ${time}`);
+      alert(`Booking created (ID: ${(data as any).id}) for ${date} ${time}`);
     } catch (err: any) {
       console.error('Quick booking failed', err);
       setBookingStatus('error');
@@ -315,15 +278,7 @@ const LawyerProfile: React.FC<LawyerProfileProps> = ({ lawyer }) => {
             setBookingStatus('loading');
             const payload: any = { lawyerId: (lawyer as any).id, clientName, clientEmail, date, time };
             if (slotId) payload.slotId = slotId;
-            const res = await fetch('http://localhost:5000/api/bookings', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            });
-            if (!res.ok) {
-              const t = await res.text();
-              throw new Error(t || 'Booking failed');
-            }
+            await apiClient.post('/api/bookings', payload);
             setBookingStatus('success');
           } catch (err) {
             console.error('Booking error:', err);

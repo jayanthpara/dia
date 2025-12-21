@@ -2,12 +2,6 @@
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-interface ApiResponse<T = any> {
-  data?: T;
-  message?: string;
-  error?: string;
-}
-
 class ApiClient {
   private baseURL: string;
 
@@ -22,12 +16,17 @@ class ApiClient {
     const url = `${this.baseURL}${endpoint}`;
     
     try {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (options.headers && typeof options.headers === 'object') {
+        Object.assign(headers, options.headers);
+      }
+
       const response = await fetch(url, {
         ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
+        headers,
         credentials: 'include',
       });
 
@@ -47,17 +46,19 @@ class ApiClient {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, body: any): Promise<T> {
+  async post<T>(endpoint: string, body: any, headers?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: JSON.stringify(body),
+      headers: headers || {},
     });
   }
 
-  async patch<T>(endpoint: string, body: any): Promise<T> {
+  async patch<T>(endpoint: string, body: any, headers?: Record<string, string>): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(body),
+      headers: headers || {},
     });
   }
 

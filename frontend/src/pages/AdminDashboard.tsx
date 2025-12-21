@@ -63,22 +63,21 @@ const AdminDashboard: React.FC = () => {
       navigate('/admin');
       return;
     }
-    fetchData(pwd ?? '');
+    fetchData();
     
     // Set up auto-refresh every 5 seconds for real-time updates
     const interval = setInterval(() => {
       if (autoRefresh) {
-        fetchData(pwd ?? '');
+        fetchData();
       }
     }, 5000);
     
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
-  const fetchData = async (pwd: string) => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const headers = pwd ? { 'x-admin-password': pwd } : {};
       const [bkData, noteData, apptData, lawyersData] = await Promise.all([
         apiClient.get('/api/bookings').catch(() => []),
         apiClient.get('/api/notifications').catch(() => []),
@@ -89,7 +88,7 @@ const AdminDashboard: React.FC = () => {
       setBookings(Array.isArray(bkData) ? bkData : []);
       setNotifications(Array.isArray(noteData) ? noteData : []);
       setAppointments(Array.isArray(apptData) ? apptData : []);
-      setRegisteredLawyers(lawyersData.credentials || []);
+      setRegisteredLawyers((lawyersData as any).credentials || []);
     } catch (err) {
       console.error('fetchData error', err);
     } finally {
@@ -105,11 +104,9 @@ const AdminDashboard: React.FC = () => {
   const markCharged = async (bookingId: string) => {
     const pwd = sessionStorage.getItem('adminPassword') || '';
     try {
-      const res = await fetch(`http://localhost:5000/api/bookings/${bookingId}/charge`, { method: 'PATCH', headers: { 'x-admin-password': pwd } });
-      if (!res.ok) throw new Error('Failed to charge');
-      const updated = await res.json();
-      setBookings(prev => prev.map(b => b.id === updated.id ? updated : b));
-      await fetchData(pwd);
+      const updated = await apiClient.patch(`/api/bookings/${bookingId}/charge`, {}, { 'x-admin-password': pwd });
+      setBookings(prev => prev.map(b => b.id === (updated as any).id ? (updated as Booking) : b));
+      await fetchData();
     } catch (err) {
       console.error('markCharged error', err);
     }
@@ -118,10 +115,8 @@ const AdminDashboard: React.FC = () => {
   const markNotificationRead = async (id: string) => {
     const pwd = sessionStorage.getItem('adminPassword') || '';
     try {
-      const res = await fetch(`http://localhost:5000/api/notifications/${id}/read`, { method: 'PATCH', headers: { 'x-admin-password': pwd } });
-      if (!res.ok) throw new Error('Failed to mark read');
-      const updated = await res.json();
-      setNotifications(prev => prev.map(n => n.id === updated.id ? updated : n));
+      const updated = await apiClient.patch(`/api/notifications/${id}/read`, {}, { 'x-admin-password': pwd });
+      setNotifications(prev => prev.map(n => n.id === (updated as any).id ? (updated as Notification) : n));
     } catch (err) {
       console.error('markNotificationRead error', err);
     }
@@ -138,12 +133,8 @@ const AdminDashboard: React.FC = () => {
 
     try {
       const payload = { lawyerId: slot.lawyerId, date: slot.date, time: slot.time, clientName, clientEmail, slotId };
-      const res = await fetch('http://localhost:5000/api/bookings', { method: 'POST', headers: { 'Content-Type': 'application/json', ...(pwd ? { 'x-admin-password': pwd } : {}) }, body: JSON.stringify(payload) });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t || 'Failed to book');
-      }
-      await fetchData(pwd);
+      await apiClient.post('/api/bookings', payload, { 'x-admin-password': pwd });
+      await fetchData();
       alert('Slot booked successfully');
     } catch (err: any) {
       alert('Booking failed: ' + (err.message || err));
@@ -181,8 +172,7 @@ const AdminDashboard: React.FC = () => {
           <h2 className="text-xl font-semibold">Registered Lawyers ({registeredLawyers.length})</h2>
           <button
             onClick={() => {
-              const pwd = sessionStorage.getItem('adminPassword') || '';
-              fetchData(pwd);
+              fetchData();
             }}
             className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
           >

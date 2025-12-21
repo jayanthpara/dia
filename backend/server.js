@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 const connectDB = require('./config/db');
+const ensureMongoDBConnected = require('./middleware/mongodbConnection');
 
 const app = express();
 
@@ -37,6 +38,9 @@ app.use(cors({
 
 app.use(express.json());
 
+// Ensure MongoDB connection for API routes
+app.use('/api', ensureMongoDBConnected);
+
 // Request logger for debugging
 app.use((req, res, next) => {
   console.log('REQ', req.method, req.originalUrl);
@@ -66,12 +70,47 @@ app.get('/', (req, res) => {
   });
 });
 
+// Health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    // Check MongoDB connection
+    const mongoStatus = await new Promise((resolve) => {
+      if (require('mongoose').connection.readyState === 1) {
+        resolve('connected');
+      } else {
+        resolve('disconnected');
+      }
+    });
+
+    res.json({
+      status: 'healthy',
+      mongodb: mongoStatus,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
   // Try to connect to MongoDB in background (non-blocking)
-  connectDB().catch(err => console.log('MongoDB connection skipped'));
+  try {
+    const dbConnection = await connectDB();
+    if (dbConnection) {
+      console.log('✓ MongoDB connected successfully');
+    } else {
+      console.log('⚠ MongoDB not available - will use JSON fallback');
+    }
+  } catch (err) {
+    console.log('⚠ MongoDB connection failed - will use JSON fallback:', err.message);
+  }
 });
 
 // Handle unhandled errors

@@ -26,50 +26,121 @@ exports.registerLawyer = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email, password, and phone are required' });
     }
 
-    // Check if lawyer already exists
-    const existingLawyer = await Lawyer.findOne({ email: email.toLowerCase() });
-    if (existingLawyer) {
-      return res.status(400).json({ success: false, message: 'Email already registered' });
+    let mongoSuccess = false;
+
+    // Try MongoDB registration with timeout
+    try {
+      const existingLawyer = await Promise.race([
+        Lawyer.findOne({ email: email.toLowerCase() }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('MongoDB timeout')), 8000)
+        )
+      ]);
+
+      if (existingLawyer) {
+        return res.status(400).json({ success: false, message: 'Email already registered' });
+      }
+
+      // Create lawyer (password will be hashed in pre-save hook)
+      const lawyer = new Lawyer({
+        name,
+        email: email.toLowerCase(),
+        password,
+        phone,
+        caseTypes: caseTypes || [],
+        languages: languages || [],
+        gender: gender || 'other',
+        yearsExperience: yearsExperience || 0,
+        location: location || '',
+        isProBono: isProBono || false,
+        bio: bio || '',
+        registeredAt: new Date(),
+        isActive: true
+      });
+
+      await lawyer.save();
+      mongoSuccess = true;
+
+      // Return lawyer without password
+      const lawyerObj = lawyer.toObject();
+      delete lawyerObj.password;
+
+      console.log('Lawyer registered successfully in MongoDB:', lawyerObj.email);
+      return res.status(201).json({
+        success: true,
+        message: 'Lawyer registered successfully',
+        lawyer: lawyerObj
+      });
+    } catch (mongoErr) {
+      console.error('MongoDB error:', mongoErr.message);
+      
+      // Handle duplicate key error from MongoDB
+      if (mongoErr.code === 11000) {
+        const field = Object.keys(mongoErr.keyPattern)[0];
+        return res.status(400).json({ success: false, message: `${field} already registered` });
+      }
+
+      // For timeout or connection errors, use JSON fallback
+      if (mongoErr.message.includes('timeout') || mongoErr.message.includes('ECONNREFUSED') || mongoErr.message.includes('buffering')) {
+        console.log('MongoDB unavailable or timeout, using JSON fallback for registration');
+      } else {
+        throw mongoErr;
+      }
     }
 
-    // Create lawyer (password will be hashed in pre-save hook)
-    const lawyer = new Lawyer({
-      name,
-      email: email.toLowerCase(),
-      password,
-      phone,
-      caseTypes: caseTypes || [],
-      languages: languages || [],
-      gender: gender || 'other',
-      yearsExperience: yearsExperience || 0,
-      location: location || '',
-      isProBono: isProBono || false,
-      bio: bio || '',
-      registeredAt: new Date(),
-      isActive: true
-    });
+    // JSON Fallback for registration (when MongoDB is unavailable)
+    if (!mongoSuccess) {
+      const fs = require('fs');
+      const path = require('path');
+      const bcrypt = require('bcrypt');
+      
+      const lawyersPath = path.join(__dirname, '../data/lawyers.json');
+      
+      try {
+        const lawyers = JSON.parse(fs.readFileSync(lawyersPath, 'utf-8'));
+        
+        if (lawyers.some(l => l.contact?.email === email.toLowerCase())) {
+          return res.status(400).json({ success: false, message: 'Email already registered' });
+        }
 
-    await lawyer.save();
+        const hashedPassword = await bcrypt.hash(password, 10);
+        
+        const newLawyer = {
+          id: String(Math.max(...lawyers.map(l => parseInt(l.id) || 0)) + 1),
+          name,
+          email: email.toLowerCase(),
+          password: hashedPassword,
+          phone,
+          caseTypes: caseTypes || [],
+          languages: languages || [],
+          gender: gender || 'other',
+          yearsExperience: yearsExperience || 0,
+          location: location || '',
+          isProBono: isProBono || false,
+          bio: bio || '',
+          registeredAt: new Date().toISOString(),
+          contact: { email: email.toLowerCase(), phone }
+        };
 
-    // Return lawyer without password
-    const lawyerObj = lawyer.toObject();
-    delete lawyerObj.password;
+        lawyers.push(newLawyer);
+        fs.writeFileSync(lawyersPath, JSON.stringify(lawyers, null, 2));
 
-    console.log('Lawyer registered successfully in MongoDB:', lawyerObj.email);
-    res.status(201).json({
-      success: true,
-      message: 'Lawyer registered successfully',
-      lawyer: lawyerObj
-    });
+        const lawyerCopy = { ...newLawyer };
+        delete lawyerCopy.password;
+
+        console.log('Lawyer registered via JSON fallback:', email);
+        res.status(201).json({
+          success: true,
+          message: 'Lawyer registered successfully',
+          lawyer: lawyerCopy
+        });
+      } catch (jsonErr) {
+        console.error('JSON fallback error:', jsonErr.message);
+        res.status(500).json({ success: false, message: 'Registration failed: ' + jsonErr.message });
+      }
+    }
   } catch (error) {
     console.error('Register error:', error);
-    
-    // Handle duplicate key error
-    if (error.code === 11000) {
-      const field = Object.keys(error.keyPattern)[0];
-      return res.status(400).json({ success: false, message: `${field} already registered` });
-    }
-    
     res.status(500).json({ success: false, message: error.message || 'Registration failed' });
   }
 };
@@ -83,9 +154,15 @@ exports.loginLawyer = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and password are required' });
     }
 
-    // Try MongoDB first
+    // Try MongoDB first with timeout
     try {
-      const lawyer = await Lawyer.findOne({ email: email.toLowerCase() }).select('+password');
+      const lawyer = await Promise.race([
+        Lawyer.findOne({ email: email.toLowerCase() }).select('+password'),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('MongoDB timeout')), 8000)
+        )
+      ]);
+
       if (lawyer) {
         const isPasswordCorrect = await lawyer.matchPassword(password);
         if (!isPasswordCorrect) {
@@ -105,7 +182,11 @@ exports.loginLawyer = async (req, res) => {
         return;
       }
     } catch (mongoErr) {
-      console.log('MongoDB not available, checking JSON fallback:', mongoErr.message);
+      if (mongoErr.message.includes('timeout') || mongoErr.message.includes('buffering')) {
+        console.log('MongoDB timeout, checking JSON fallback');
+      } else {
+        console.log('MongoDB error:', mongoErr.message);
+      }
     }
 
     // Fallback: Use JSON file for default lawyers
