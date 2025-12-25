@@ -1,125 +1,139 @@
 // backend/server.js
-// Express server with MongoDB for lawyer management
+// Express server with MongoDB-first data strategy (JSON fallback only if Mongo fails)
 
+// =======================
+// LOAD ENV (MUST BE FIRST)
+// =======================
+require('dotenv').config();
+
+console.log('ENV CHECK:', {
+  MONGODB_URI: process.env.MONGODB_URI ? 'LOADED' : 'MISSING',
+  NODE_ENV: process.env.NODE_ENV,
+  PORT: process.env.PORT
+});
+
+// =======================
+// IMPORTS
+// =======================
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
-const connectDB = require('./config/db');
-const ensureMongoDBConnected = require('./middleware/mongodbConnection');
 
+const connectDB = require('./config/db');
+const dataMode = require('./config/dataMode');
+
+// =======================
+// APP INIT
+// =======================
 const app = express();
 
-// CORS Configuration for Vercel
+// =======================
+// CORS CONFIG
+// =======================
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
   /\.vercel\.app$/,
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
-  origin: function(origin, callback) {
-    if (!origin || allowedOrigins.some(allowed => {
-      if (allowed instanceof RegExp) {
-        return allowed.test(origin);
-      }
-      return allowed === origin;
-    })) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+  origin(origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (process.env.NODE_ENV === 'development') {
+      return callback(null, true);
     }
+
+    const allowed = allowedOrigins.some(o =>
+      o instanceof RegExp ? o.test(origin) : o === origin
+    );
+
+    if (allowed) return callback(null, true);
+
+    console.log('❌ Blocked by CORS:', origin);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// =======================
+// MIDDLEWARE
+// =======================
 app.use(express.json());
 
-// Ensure MongoDB connection for API routes
-app.use('/api', ensureMongoDBConnected);
-
-// Request logger for debugging
+// Request logger
 app.use((req, res, next) => {
-  console.log('REQ', req.method, req.originalUrl);
+  console.log(`[REQ] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Routes
-const lawyersRouter = require('./routes/lawyers');
-const bookingsRouter = require('./routes/bookings');
-const notificationsRouter = require('./routes/notifications');
-const adminRouter = require('./routes/admin');
-const appointmentsRouter = require('./routes/appointments');
-const lawyerAuthRouter = require('./routes/lawyerAuth');
+// =======================
+// ROUTES
+// =======================
+app.use('/api/lawyers', require('./routes/lawyers'));
+app.use('/api/bookings', require('./routes/bookings'));
+app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/appointments', require('./routes/appointments'));
+app.use('/api/lawyer-auth', require('./routes/lawyerAuth'));
 
-app.use('/api/lawyers', lawyersRouter);
-app.use('/api/bookings', bookingsRouter);
-app.use('/api/notifications', notificationsRouter);
-app.use('/api/admin', adminRouter);
-app.use('/api/appointments', appointmentsRouter);
-app.use('/api/lawyer-auth', lawyerAuthRouter);
-
+// =======================
+// ROOT & HEALTH
+// =======================
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Lawyer recommendation API - GET /api/lawyer-auth/all for registered lawyers',
-    status: 'running',
+  res.json({
+    message: 'Lawyer recommendation API is running',
+    dataMode: dataMode.mode,
     timestamp: new Date().toISOString()
   });
 });
 
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  try {
-    // Check MongoDB connection
-    const mongoStatus = await new Promise((resolve) => {
-      if (require('mongoose').connection.readyState === 1) {
-        resolve('connected');
-      } else {
-        resolve('disconnected');
-      }
-    });
-
-    res.json({
-      status: 'healthy',
-      mongodb: mongoStatus,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({
-      status: 'unhealthy',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
+app.get('/health', (req, res) => {
+  const mongoose = require('mongoose');
+  res.json({
+    status: 'healthy',
+    dataMode: dataMode.mode,
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date().toISOString()
+  });
 });
 
+// =======================
+// SERVER START (ONLY ONCE)
+// =======================
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
-  // Try to connect to MongoDB in background (non-blocking)
+app.listen(PORT, async () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+
   try {
-    const dbConnection = await connectDB();
-    if (dbConnection) {
-      console.log('✓ MongoDB connected successfully');
+    const mongoAvailable = await connectDB();
+
+    if (mongoAvailable) {
+      dataMode.setMode('MONGO');
+      console.log('[SYSTEM] MongoDB ACTIVE → All data from MongoDB');
     } else {
-      console.log('⚠ MongoDB not available - will use JSON fallback');
+      dataMode.setMode('JSON');
+      console.log('[SYSTEM] MongoDB DOWN → Using JSON fallback');
     }
   } catch (err) {
-    console.log('⚠ MongoDB connection failed - will use JSON fallback:', err.message);
+    dataMode.setMode('JSON');
+    console.error('[SYSTEM] MongoDB init failed → JSON fallback:', err.message);
   }
 });
 
-// Handle unhandled errors
+// =======================
+// PROCESS SAFETY
+// =======================
 process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception:', err);
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  // Don't exit - let server keep running
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
 });

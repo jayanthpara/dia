@@ -1,99 +1,169 @@
+// backend/routes/admin.js
+// Mongo-first admin routes with strict JSON fallback
+
 const express = require('express');
 const router = express.Router();
-const adminAuth = require('../middleware/adminAuth');
 const fs = require('fs');
 const path = require('path');
-const bcrypt = require('bcrypt');
 
-// POST /api/admin/login { password }
+const adminAuth = require('../middleware/adminAuth');
+const dataMode = require('../config/dataMode');
+const Lawyer = require('../models/Lawyer');
+
+/* =======================
+   JSON HELPERS (FALLBACK)
+======================= */
+const lawyersPath = path.join(__dirname, '../data/lawyers.json');
+
+function readLawyersJSON() {
+  if (!fs.existsSync(lawyersPath)) return [];
+  return JSON.parse(fs.readFileSync(lawyersPath, 'utf-8') || '[]');
+}
+
+/* =======================
+   ADMIN LOGIN
+======================= */
 router.post('/login', (req, res) => {
   const provided = req.body?.password;
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
 
-  // If no password provided, allow open admin access
-  if (!provided) return res.json({ ok: true, open: true });
+  // Open mode (dev only)
+  if (!provided) {
+    console.log('[ADMIN] Open login (no password)');
+    return res.json({ ok: true, open: true });
+  }
 
-  if (provided && provided === adminPassword) return res.json({ ok: true });
-  return res.status(401).json({ ok: false, error: 'Invalid admin password' });
+  if (provided === adminPassword) {
+    console.log('[ADMIN] Login success');
+    return res.json({ ok: true });
+  }
+
+  console.log('[ADMIN] Login failed');
+  res.status(401).json({ ok: false, error: 'Invalid admin password' });
 });
 
-// Simple ping for admin auth
-router.get('/me', adminAuth, (req, res) => res.json({ ok: true }));
+/* =======================
+   ADMIN SESSION CHECK
+======================= */
+router.get('/me', adminAuth, (req, res) => {
+  res.json({ ok: true });
+});
 
-// GET /api/admin/credentials - Get all lawyer credentials with registration details
-router.get('/credentials', async (req, res) => {
+/* =======================
+   GET ALL CREDENTIALS
+======================= */
+router.get('/credentials', adminAuth, async (req, res) => {
   try {
-    const lawyersPath = path.join(__dirname, '../data/lawyers.json');
-    const lawyersData = JSON.parse(fs.readFileSync(lawyersPath, 'utf-8'));
+    /* ========= MONGO MODE ========= */
+    if (dataMode.mode === 'MONGO') {
+      const lawyers = await Lawyer.find({})
+        .select('-password')
+        .lean();
 
-    const credentials = lawyersData.map(lawyer => ({
-      id: lawyer.id,
-      name: lawyer.name,
-      email: lawyer.contact?.email || lawyer.email || 'N/A',
-      phone: lawyer.contact?.phone || lawyer.phone || 'N/A',
-      caseTypes: lawyer.caseTypes || [],
-      languages: lawyer.languages || [],
-      gender: lawyer.gender || 'other',
-      yearsExperience: lawyer.yearsExperience || 0,
-      location: lawyer.location || '',
-      isProBono: lawyer.isProBono || false,
-      bio: lawyer.bio || '',
-      registeredAt: lawyer.registeredAt || new Date().toISOString(),
-      isActive: lawyer.isActive !== false
-    }));
+      console.log(
+        `[ADMIN] FETCHED ${lawyers.length} credentials (MongoDB)`
+      );
 
-    res.status(200).json({
-      success: true,
-      count: credentials.length,
-      credentials
+      return res.json({
+        success: true,
+        count: lawyers.length,
+        credentials: lawyers
+      });
+    }
+
+    /* ========= JSON MODE ========= */
+    const lawyers = readLawyersJSON().map(l => {
+      const copy = { ...l };
+      delete copy.password;
+      return copy;
     });
+
+    console.log(
+      `[ADMIN] FETCHED ${lawyers.length} credentials (JSON)`
+    );
+
+    res.json({
+      success: true,
+      count: lawyers.length,
+      credentials: lawyers
+    });
+
   } catch (error) {
-    console.error('Error fetching credentials:', error);
-    res.status(500).json({ success: false, error: error.message || 'Failed to fetch credentials' });
+    console.error('[ADMIN] FETCH ERROR:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch credentials'
+    });
   }
 });
 
-// GET /api/admin/credentials/search?query=searchterm - Search credentials by name or email
-router.get('/credentials/search', async (req, res) => {
+/* =======================
+   SEARCH CREDENTIALS
+======================= */
+router.get('/credentials/search', adminAuth, async (req, res) => {
+  const { query } = req.query;
+
   try {
-    const { query } = req.query;
-    const lawyersPath = path.join(__dirname, '../data/lawyers.json');
-    const lawyersData = JSON.parse(fs.readFileSync(lawyersPath, 'utf-8'));
-    
-    let filtered = lawyersData;
+    /* ========= MONGO MODE ========= */
+    if (dataMode.mode === 'MONGO') {
+      const mongoQuery = query
+        ? {
+          $or: [
+            { name: { $regex: query, $options: 'i' } },
+            { email: { $regex: query, $options: 'i' } }
+          ]
+        }
+        : {};
+
+      const lawyers = await Lawyer.find(mongoQuery)
+        .select('-password')
+        .lean();
+
+      console.log(
+        `[ADMIN] SEARCH "${query}" → ${lawyers.length} results (MongoDB)`
+      );
+
+      return res.json({
+        success: true,
+        count: lawyers.length,
+        credentials: lawyers
+      });
+    }
+
+    /* ========= JSON MODE ========= */
+    let lawyers = readLawyersJSON();
+
     if (query) {
-      const lowerQuery = query.toLowerCase();
-      filtered = lawyersData.filter(lawyer => 
-        lawyer.name?.toLowerCase().includes(lowerQuery) || 
-        lawyer.contact?.email?.toLowerCase().includes(lowerQuery) ||
-        lawyer.email?.toLowerCase().includes(lowerQuery)
+      const q = query.toLowerCase();
+      lawyers = lawyers.filter(l =>
+        l.name?.toLowerCase().includes(q) ||
+        l.email?.toLowerCase().includes(q) ||
+        l.contact?.email?.toLowerCase().includes(q)
       );
     }
 
-    const credentials = filtered.map(lawyer => ({
-      id: lawyer.id,
-      name: lawyer.name,
-      email: lawyer.contact?.email || lawyer.email || 'N/A',
-      phone: lawyer.contact?.phone || lawyer.phone || 'N/A',
-      caseTypes: lawyer.caseTypes || [],
-      languages: lawyer.languages || [],
-      gender: lawyer.gender || 'other',
-      yearsExperience: lawyer.yearsExperience || 0,
-      location: lawyer.location || '',
-      isProBono: lawyer.isProBono || false,
-      bio: lawyer.bio || '',
-      registeredAt: lawyer.registeredAt || new Date().toISOString(),
-      isActive: lawyer.isActive !== false
-    }));
-
-    res.status(200).json({
-      success: true,
-      count: credentials.length,
-      credentials
+    lawyers = lawyers.map(l => {
+      const copy = { ...l };
+      delete copy.password;
+      return copy;
     });
+
+    console.log(
+      `[ADMIN] SEARCH "${query}" → ${lawyers.length} results (JSON)`
+    );
+
+    res.json({
+      success: true,
+      count: lawyers.length,
+      credentials: lawyers
+    });
+
   } catch (error) {
-    console.error('Error fetching credentials:', error);
-    res.status(500).json({ success: false, error: error.message || 'Failed to fetch credentials' });
+    console.error('[ADMIN] SEARCH ERROR:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to search credentials'
+    });
   }
 });
 

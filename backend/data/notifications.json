@@ -1,5 +1,26 @@
 [
   {
+    "id": "30d7bb05-8bd4-4d38-8330-9eca289acecf",
+    "bookingId": "6dc993c3-f080-413d-9557-c035c1f8c8ab",
+    "message": "New booking for jayanth: ha on 2025-12-27 10:00",
+    "read": false,
+    "createdAt": "2025-12-25T11:19:35.354Z"
+  },
+  {
+    "id": "3ba8da99-958d-4f5b-a02c-079c91d209c2",
+    "bookingId": "9352f9f6-da84-4c6f-8f89-c93edef44682",
+    "message": "New booking for jayanth: para on 2025-12-25 16:49",
+    "read": false,
+    "createdAt": "2025-12-25T11:19:21.346Z"
+  },
+  {
+    "id": "255c9263-5f0a-40bb-b6b3-4e0c270e666c",
+    "bookingId": "719d107e-3f28-40eb-a362-6b3659339514",
+    "message": "New booking for Chen Li: jay on 2025-12-25 16:48",
+    "read": false,
+    "createdAt": "2025-12-25T11:18:56.020Z"
+  },
+  {
     "id": "68706a09-b4a2-4385-ac3f-7e25e121ef44",
     "bookingId": "7436c67a-af34-4b1d-9c08-add64b381ae4",
     "message": "New booking for jayanth: Guest on 2025-12-20 23:34",

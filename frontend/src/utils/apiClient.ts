@@ -1,6 +1,6 @@
 // Frontend API client for centralized API calls
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL || '';
 
 class ApiClient {
   private baseURL: string;
@@ -14,12 +14,12 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     try {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       if (options.headers && typeof options.headers === 'object') {
         Object.assign(headers, options.headers);
       }
