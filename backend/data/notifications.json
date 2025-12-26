@@ -42,55 +42,6 @@
     "createdAt": "2025-12-20T18:04:30.040Z"
   },
   {
-    "id": "0104f494-f604-46bd-8315-0f80dc88d7c1",
-    "bookingId": "6bcef409-7eb2-41ef-bc81-e41e42fdd3dd",
-    "message": "New booking for Aisha Khan: jaya@mail.com on 2026-01-10 09:00",
-    "read": false,
-    "createdAt": "2025-12-20T18:02:33.388Z"
-  },
-  {
-    "id": "c7d6674e-036e-4ac5-a220-9b09f9bb053f",
-    "bookingId": "f4570e62-b524-4b3d-9e10-52af123eaf32",
-    "message": "New booking for soha: para on 2025-12-22 13:00",
-    "read": false,
-    "createdAt": "2025-12-20T18:00:43.306Z"
-  },
-  {
-    "id": "848ee9d5-b15f-443c-bde8-7e6d442c21fb",
-    "bookingId": "3c5d80d9-dcf4-4d31-897c-2830d698febe",
-    "message": "New booking for soha: Guest on 2025-12-20 23:30",
-    "read": false,
-    "createdAt": "2025-12-20T18:00:24.875Z"
-  },
-  {
-    "id": "385024f4-56a4-4c83-95df-0cb9d1a4c271",
-    "bookingId": "3ec8d1d2-70ac-439e-9b8b-898044cc3b3d",
-    "message": "New booking for Aisha Khan: Guest on 2025-12-20 23:03",
-    "read": false,
-    "createdAt": "2025-12-20T17:33:00.500Z"
-  },
-  {
-    "id": "7a347a7a-e594-44f5-86d0-cbae923f66db",
-    "bookingId": "72ce9a51-4a04-4977-af4f-9e2405d1f361",
-    "message": "New booking for Aisha Khan: Guest on 2025-12-20 23:02",
-    "read": false,
-    "createdAt": "2025-12-20T17:32:14.425Z"
-  },
-  {
-    "id": "dedade9c-be3a-46a9-933f-6a394fbea558",
-    "bookingId": "db257ece-2ff7-498c-97e3-1882df27b074",
-    "message": "New booking for Bilal Ahmed: Guest on 2025-12-20 19:36",
-    "read": false,
-    "createdAt": "2025-12-20T14:06:32.593Z"
-  },
-  {
-    "id": "511850e0-4d63-489a-b0a0-53b32da4ce2f",
-    "bookingId": "edeae496-0b8b-4d89-a409-c7b770544a8e",
-    "message": "Booking edeae496-0b8b-4d89-a409-c7b770544a8e for Ethan Smith marked as charged",
-    "read": false,
-    "createdAt": "2025-12-19T20:28:49.481Z"
-  },
-  {
     "id": "eb85c89c-a32c-447a-9fff-688baebea52e",
     "bookingId": "edeae496-0b8b-4d89-a409-c7b770544a8e",
     "message": "New booking for Ethan Smith: Guest on 2025-12-19 01:58",
